@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Registration</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <p>Please Register Your Store From The Form Below</p>
+  <form id="storeForm">
+    <label for="StoreName">Store Name:</label>
+    <input type="text" id="StoreName" name="StoreName" required><br><br>
+    
+    <label for="PhoneNumber">Phone Number:</label>
+    <input type="tel" id="PhoneNumber" name="PhoneNumber" required><br><br>
+    
+    <label for="Location">Location:</label>
+    <input type="text" id="Location" name="Location" required>
+    <button type="button" id="getLocationButton">Get Location</button><br>
+    <div id="loadingSpinner" class="spinner" style="display: none;"></div>
+    <input type="submit" id="submit" value="Submit">
+  </form>
+
+  <script>
+    const form = document.querySelector("#storeForm");
+    const submitButton = document.querySelector("#submit");
+    const getLocationButton = document.querySelector("#getLocationButton");
+    const locationInput = document.querySelector("#Location");
+    const loadingSpinner = document.querySelector("#loadingSpinner");
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbw_YJ-LKYUVN4mZwlyw2P8K77ghOFwCVDSIiE053pRKyd3rhxlJDEMqTi75qswo-Irs/exec';
+    const geocodingAPIKey = 'AIzaSyBDQ7rMw3OrL8-vFCSBUoOzX56poleiN4Y';
+
+    function getLocation() {
+    if (navigator.geolocation) {
+      loadingSpinner.style.display = 'block';
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        getAddressFromCoordinates(latitude, longitude);
+      }, function(error) {
+        loadingSpinner.style.display = 'none';
+        console.error('Error getting location: ', error);
+        alert('Error getting location: ' + error.message);
+      });
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+      alert('Geolocation is not supported by this browser.');
+    }
+  }
+
+  function getAddressFromCoordinates(latitude, longitude) {
+    const geocodingURL = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${geocodingAPIKey}`;
+    fetch(geocodingURL)
+      .then(response => response.json())
+      .then(data => {
+        loadingSpinner.style.display = 'none';
+        if (data.status === 'OK') {
+          const address = data.results[0].formatted_address;
+          locationInput.value = address;
+        } else {
+          console.error('Geocoding error: ', data.status);
+          alert('Geocoding error: ' + data.status);
+        }
+      })
+      .catch(error => {
+        loadingSpinner.style.display = 'none';
+        console.error('Error fetching geocoding data: ', error);
+        alert('Error fetching geocoding data: ' + error.message);
+      });
+  }
+
+  // Event listener for the "Get Location" button
+  getLocationButton.addEventListener('click', function() {
+    getLocation();
+  });
+  
+  form.addEventListener('submit', e => {
+    submitButton.disabled = true;
+    submitButton.style.backgroundColor = '#FFA500';
+    e.preventDefault();
+    let requestBody = new FormData(form);
+    fetch(scriptURL, { method: 'POST', body: requestBody})
+      .then(response => response.json())
+      .then(data => {
+          alert('Success!', data);
+          form.reset();
+          submitButton.disabled = false;
+          submitButton.style.backgroundColor = '#4CAF50';
+        })
+      .catch(error => {
+        alert('Error!', error.message)
+        submitButton.disabled = false;
+        submitButton.style.backgroundColor = '#4CAF50';
+      });
+    });
+ </script>
+</body>
+</html>
